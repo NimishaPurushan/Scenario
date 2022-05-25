@@ -1,0 +1,18 @@
+SCENARIO: SRHFW1000.scenario
+
+LogFileType 	: PCAP
+ScriptPath		: "../automation.py"
+VariablePath 	: "../automation.py", "./variables.py"
+TsharkPAth      : "C:\\Program Files\\Wireshark"
+
+
+SCENARIO_START: TEST_2
+    RC_VAR_abc= PACKET_FILTER   pcap="..\\wireshark_parsing_tool\\silentcall.pcapng"      pcap_filter="(fxl-5.0.0.msgType==111)"     protocol="fxl-5.0.0"    ip=IP    port=PORT	    message_info=[{'fxl-5.0.0.msgType': '111'},{'fxl-5.0.0.msgType': '111'}]
+    IF_START CONDITION_1
+        PACKET_FILTER    pcap="..\\wireshark_parsing_tool\\silentcall.pcapng"     pcap_filter="(fxl-5.0.0.msgType==111)"    protocol="fxl-5.0.0"    ip=IP    port=PORT    condition=FALSE
+    IF
+    IF_START CONDITION_2
+        RC_VAR_abc=    	PACKET_FILTER    pcap="../wireshark_parsing_tool/silentcall.pcapng"     pcap_filter="(fxl-5.0.0.msgType==111)"    protocol="fxl-5.0.0"    ip=IP    port=PORT 		condition=FALSE
+    IF_END
+SCENARIO_END
+

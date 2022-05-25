@@ -10,7 +10,7 @@ class Token(Enum):
     SYMBOL = 5
     BRACKET = 6
     IF_START = "IF_START"
-    IF_ELSE = "IF_ELSE"
+    ELSE = "ELSE"
     IF_END = "IF_END"
     SCENARIO_START ="SCENARIO_START"
     SCENARIO_END = "SCENARIO_END"
@@ -25,14 +25,14 @@ class Token(Enum):
         return self.value == val
 
 
-__function = {
-    "PACKET_FILTER": "packet_filter",
-    "CHECK_TIMING": "check_timing"
+INBUILT_FUNCTION_LIST = {
+    "PACKET_FILTER": lambda **x: print("PACKET_FILTER", x),
+    "CHECK_TIMING":  lambda **x: print("CHECK_TIMING", x)
 }
 
 
 def is_function(name):
-    return name in __function
+    return name in INBUILT_FUNCTION_LIST
 
 
 class TokenInfo(NamedTuple):

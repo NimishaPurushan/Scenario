@@ -24,7 +24,10 @@ class Parser:
             self._parse_values() or
             self._parse_assignment() or
             self._parse_import() or
-            self._parse_scenario())
+            self._parse_scenario() or
+            self._parse_if_else() or
+            self._parse_function() or 
+            self._parse_list_or_dict())
 
     def _get_next_statement(self):
         data = self.token
@@ -39,21 +42,79 @@ class Parser:
         if (expected_value == None and expected_value == self.token.value ):
             self.raise_error(f"expected {expected_value} found {self.token.value}",  exception="ValueError")
         return True
-  
+    
+    def _parse_list_or_dict(self):
+
+        if self.token == Token.BRACKET:
+            if self.token.value == "[":
+                data = []
+                while self.token.value != "]":
+                    self._get_next_statement()
+                    data.append(self.next_expression())
+                    if self.token.value == "," or  "]":
+                        self.raise_error(f"expected \",\" or \"]\" found {self.token.value}", exception="SyntaxError")
+                return ListStatement(data)
+
+            if self.token.value == "{":
+                data = {}
+                while self.token.value != "}":
+                    self._get_next_statement()
+                    key = self.next_expression()
+                    if self.token.value == ":" :
+                        self.raise_error(f"expected \":\" found {self.token.value}", exception="SyntaxError")
+                return DictStatement(data)
+           
+
+    def _parse_function(self):
+        if self.token == Token.INBUILT_FUNCTION:
+            function = self.token.value
+            current_line = self.lexer.lineno
+            self._get_next_statement()
+            arguments = {}
+            while current_line < self.lexer.lineno:
+                if self.token != Token.IDENTIFIER:
+                    self.raise_error(f"expected {Token.IDENTIFIER} found {self.token}", exception="SyntaxError")
+      
+                variable_name = self.token.value
+                self._is_next_token(Token.SYMBOL)
+                if self.token.value == "=" or  self.token.value == ":":
+                    self._get_next_statement()
+                    if variable_name in arguments:
+                        self.raise_error(f"duplicate argument {variable_name}", exception="SyntaxError")
+                    arguments[variable_name]  =  self.next_expression()
+                else:
+                    self.raise_error(f"expected \":\" or \"=\" found \"{self.token.value}\"", exception="SyntaxError")
+            return FunctionStatement(function, DictStatement(arguments))
+
+    def _parse_if_else(self):
+        if self.token == Token.IF_START:
+            self._get_next_statement()
+            condition = self.next_expression()
+            blocks_command = [
+                [], # true block
+                []] # false block
+            ptr = 0
+            self._get_next_statement()
+            while self.token != Token.IF_END:
+                if self.token == Token.ELSE:
+                    ptr+=1
+                elif self.token == Token.EOF:
+                    self.raise_error(f"unexpected \"EOF\" expected {Token.SCENARIO_END.value}", exception="SyntaxError")
+                blocks_command[ptr].append(self.next_expression())
+            return IfStatement(condition, blocks_command[True], blocks_command[False])
+
     def _parse_scenario(self):
-        print(self.token == Token.SCENARIO_START)
         if self.token == Token.SCENARIO_START:
             self._get_next_statement()
             if self.token.value != ":":
-                self.raise_error(f"expected \":\" found {self.token.value}", exception="SyntaxError")
+                self.raise_error(f"expected \":\" found \"{self.token.value}\"", exception="SyntaxError")
             self._get_next_statement()
             test_name = self.token
             blocks_command = []
             self._get_next_statement()
             while self.token != Token.SCENARIO_END:
-                print(blocks_command)
                 if self.token == Token.EOF:
-                    self.raise_error(f"unexpected \"EOF\" expected {Token.SCENARIO_END.value}", exception="SyntaxError")
+                    self.raise_error(f"unexpected \"EOF\" expected \"{Token.SCENARIO_END.value}\"", exception="SyntaxError")
                 blocks_command.append(self.next_expression())
             return ScenarioStatement(test_name, blocks_command)
 
@@ -70,7 +131,6 @@ class Parser:
 
     def _parse_import(self):
         if self.token == Token.IMPORT:
-            variable_name = self.token
             self._is_next_token(Token.SYMBOL)
             if self.token.value != "=" and self.token.value != ":":
                 self.raise_error(f"expected \":\" or \"=\" found {self.token.value}", exception="SyntaxError")
@@ -93,6 +153,13 @@ class Parser:
                 return AssignmentStatment(variable_name,  self.next_expression(), is_global=self.token.value == ":")
             else:
                 self.raise_error(f"expected \":\" or \"=\" found {self.token.value}")
+
+        elif self.token == Token.D_IDENTIFIER:
+            variable_name = self.token
+            self._get_next_statement()
+            return DAssignmentStatement(variable_name)
+            
+
 
     def __next__(self): return self.next_expression()
 

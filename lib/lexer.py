@@ -1,6 +1,6 @@
 from sys import stderr
 import traceback
-from .tokens import Token, TokenInfo, is_function
+from .tokens import Token, TokenInfo, is_function, INBUILT_FUNCTION_LIST
 from .utils import file_next_iterator
 
 
@@ -87,8 +87,8 @@ class Lexer:
             return TokenInfo(Token.SCENARIO_START, None)
         elif data == Token.SCENARIO_END:
             return TokenInfo(Token.SCENARIO_END, None)
-        elif data == Token.IF_ELSE:
-            return TokenInfo(Token.IF_ELSE, None)
+        elif data == Token.ELSE:
+            return TokenInfo(Token.ELSE, None)
         elif data == Token.FALSE:
             return TokenInfo(Token.FALSE, None)    
         elif data == Token.TRUE:
@@ -96,7 +96,7 @@ class Lexer:
         elif data == Token.IMPORT:
             return TokenInfo(Token.IMPORT, None)
         elif is_function(data):
-            return TokenInfo(Token.INBUILT_FUNCTION, data)    
+            return TokenInfo(Token.INBUILT_FUNCTION, INBUILT_FUNCTION_LIST[data])    
         else:
             return TokenInfo(Token.IDENTIFIER, data)
      
@@ -119,7 +119,8 @@ class Lexer:
                 self._get_next_char()
                 if self.__is_newline():
                     self.raise_error("variable access not terminated by '}'")
-            data = self.line[_start-1: self.pos-1]
+            self._get_next_char()
+            data = self.line[_start+1: self.pos-2]
             return TokenInfo(Token.D_IDENTIFIER, data)
 
     def _get_symbol_token(self):
@@ -168,7 +169,7 @@ class Lexer:
     def __is_identifier(self) -> bool:
         return ("a" <= self.char <= "z" or 
                 "A" <= self.char <= "Z" or
-                "_" <= self.char)
+                "_" == self.char)
 
     # making Lexer class iterable
     def __next__(self): return self.next_token()

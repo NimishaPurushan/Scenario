@@ -1,7 +1,7 @@
 from .tokens import Token
 from os.path import exists
 
-class IntegerStatement():
+class IntegerStatement:
     def __init__(self, tokeninfo):
         self.value = tokeninfo.value
 
@@ -14,7 +14,7 @@ class IntegerStatement():
         except ValueError:
             lexer.raise_error(f"{self.value} is not a valid integer", exception="ValueError")
 
-class ImportStatement():
+class ImportStatement:
     def __init__(self, address: list):
         self.value = [a.value for a in address]
 
@@ -27,7 +27,7 @@ class ImportStatement():
             if not exists(address):
                 lexer.raise_error(f"{address} does not exist", exception="FileNotFoundError")
 
-class StringStatement():
+class StringStatement:
     def __init__(self, tokeninfo):
         self.value = tokeninfo.value
 
@@ -40,14 +40,14 @@ class StringStatement():
         except ValueError:
             lexer.raise_error(f"{self.value} is not a string integer", exception="ValueError")
                    
-class BooleanStatement():
+class BooleanStatement:
     def __init__(self, tokeninfo):
         self.token = tokeninfo.token
 
     def eval(self, env, lexer):
         return True if self.token == Token.TRUE else False
 
-class AssignmentStatment():
+class AssignmentStatment:
     def __init__(self, token, expression, *, is_global):
         self.variable_name = token.value
         self.expression = expression
@@ -81,3 +81,53 @@ class ScenarioStatement:
     def eval(self,  env, lexer):
         self.block.eval(env, lexer)
         
+
+class IfStatement:
+    def __init__(self, condition, true_block, false_block: list):
+        self.condition = condition
+        self.true_block = true_block
+        self.false_block = false_block
+    
+    def __repr__(self):
+        return f"SCENARIO {self.test_name} {self.block}"
+
+    def eval(self,  env, lexer):
+        if self.condition.eval():
+            self.true_block.eval()
+        else:
+            self.false_block.eval()
+
+    
+class DictStatement:
+    def __init__(self, variables):
+        self.variables =variables
+
+    def eval(self, env, lexer):   
+        return {x: y.eval(env, lexer) for x,y in self.variables.items()}   
+
+
+class DAssignmentStatement:
+    def __init__(self, variable):
+        self.variable = variable.value
+     
+    def __repr__(self):
+        return f"SCENARIO {self.test_name} {self.block}"
+
+    def eval(self,  env, lexer):
+        return env.get_value(self.variable)
+        
+class FunctionStatement:
+    def __init__(self, function, arguments: DictStatement):
+        self.function = function
+        self.arguments =arguments
+
+    def eval(self, env, lexer):   
+        return self.function(**self.arguments.eval(env, lexer))
+
+class ListStatement:
+    def __init__(self, list_data):
+        self.list_data = list_data
+       
+    def eval(self, env, lexer):   
+        return [x.eval(env, lexer) for x in self.list_data]
+

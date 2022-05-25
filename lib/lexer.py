@@ -83,18 +83,20 @@ class Lexer:
             return TokenInfo(Token.IF_START, None)
         elif data == Token.IF_END:
             return TokenInfo(Token.IF_END, None)
-        elif data == Token.SENARIO_START:
-            return TokenInfo(Token.SENARIO_START, None)
-        elif data == Token.SENARIO_END:
-            return TokenInfo(Token.SENARIO_END, None)
+        elif data == Token.SCENARIO_START:
+            return TokenInfo(Token.SCENARIO_START, None)
+        elif data == Token.SCENARIO_END:
+            return TokenInfo(Token.SCENARIO_END, None)
         elif data == Token.IF_ELSE:
             return TokenInfo(Token.IF_ELSE, None)
         elif data == Token.FALSE:
             return TokenInfo(Token.FALSE, None)    
         elif data == Token.TRUE:
             return TokenInfo(Token.FALSE, None)
+        elif data == Token.IMPORT:
+            return TokenInfo(Token.IMPORT, None)
         elif is_function(data):
-            return TokenInfo(Token.INBUILT_FUNCTION, None)    
+            return TokenInfo(Token.INBUILT_FUNCTION, data)    
         else:
             return TokenInfo(Token.IDENTIFIER, data)
      

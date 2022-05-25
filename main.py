@@ -1,7 +1,6 @@
 from sys import argv, stderr
 from lib.lexer import Lexer
 from lib.parser import Parser
-from lib.tokens import Token
 from lib.environment import GlobalEnv
 
 

@@ -13,9 +13,10 @@ class GlobalEnv:
     #      "LocalVariable": "B",
     #   }]
     def __init__(self, file_name):
+        self.file_name = file_name
         self._ENV = []
         self._stack_ptr = -1 # 0 pos means  global variable    
-        self.add_stack(file_name, 0)
+        self.add_stack("main", 0)
         
     def add_stack(self, function_name, line_no):
         self._stack_ptr += 1
@@ -49,6 +50,6 @@ class GlobalEnv:
             stack = self._ENV.pop()
             caller = stack["__name__"]
             line_no = stack["__line__"]
-            print(f"File \"{file_name}\", line {line_no}, in {caller}")
+            print(f"File \"{self.file_name}\", line {line_no}, in {caller}")
 
 

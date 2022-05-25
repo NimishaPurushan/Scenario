@@ -12,13 +12,17 @@ class Token(Enum):
     IF_START = "IF_START"
     IF_ELSE = "IF_ELSE"
     IF_END = "IF_END"
-    SENARIO_START ="SENARIO_START"
-    SENARIO_END = "SENARIO_STOP"
+    SCENARIO_START ="SCENARIO_START"
+    SCENARIO_END = "SCENARIO_END"
     NONE = "NONE"
     FALSE = "FALSE"
     TRUE = "TRUE"
     INTEGER = 13
     INBUILT_FUNCTION = 14
+    IMPORT = "IMPORT"
+
+    def __eq__(self, val):
+        return self.value == val
 
 
 __function = {

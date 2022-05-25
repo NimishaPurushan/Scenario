@@ -1,6 +1,10 @@
 from logging import exception
+from .logger import FrameworkLogger, ScenarioLogger
 from .syntax_tree import *
 from .tokens import Token
+
+log = FrameworkLogger(__name__)
+tc_log = ScenarioLogger(__name__)
 
 
 class Parser:
@@ -13,7 +17,7 @@ class Parser:
        self.lexer.raise_error(message, exception=exception)
 
     def next_expression(self):
-        print(self.token)
+        log.info(self.token)
         if self.token == Token.EOF:
             raise StopIteration()
         return (

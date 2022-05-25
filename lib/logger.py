@@ -1,21 +1,17 @@
-import os
 import logging
 from logging.handlers import RotatingFileHandler
 from logging import Formatter
 from logging.handlers import DatagramHandler
-from watermelon.version import BASE_PLATFORM_NAME
-from getpass import getuser
 from datetime import datetime
-from uuid import uuid1
 
 '''LOGGING VARIABLES'''
 # The below hard-coded values shall be used
 # when running module(s) as main. Else, when
 # run from __main__ , the below values shall
 # be overridden by the values present in 'LoggingConfig.ini'
-logging_file_name = 'log_analyzer' + uuid1().hex + '.log'
+logging_file_name = 'interpreter.log'
 CONSOLE_LOG_TO_DISPLAY = True
-MAX_LOG_ROTATOR_FILES = 0
+MAX_LOG_ROTATOR_FILES = 5
 MAX_LOG_FILE_SIZE_kB = 100000
 DATAGRAM_HOST_IP = '127.0.0.15'
 DATAGRAM_PORT_NUMBER = 7777

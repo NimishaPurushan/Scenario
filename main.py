@@ -3,6 +3,7 @@ from lib.lexer import Lexer
 from lib.parser import Parser
 from lib.environment import GlobalEnv
 from argparse import ArgumentParser
+import traceback
 
 
 parse = ArgumentParser()
@@ -25,7 +26,6 @@ if not args.scn_file:
 
 def Evaluator(lexer, parser, env):
     for parser in parser:
-        print(parser)
         parser.eval(env, lexer)
 
 
@@ -39,7 +39,6 @@ def main():
     except AssertionError:
         global_env.traceback()
     except Exception as E:
-        import traceback
         print(E, file=stderr)
         traceback.print_exc()
     

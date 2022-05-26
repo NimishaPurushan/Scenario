@@ -44,6 +44,9 @@ class BooleanStatement:
     def __init__(self, tokeninfo):
         self.token = tokeninfo.token
 
+    def __repr__(self):
+        return "TRUE" if self.token else "FALSE"
+
     def eval(self, env, lexer):
         return True if self.token == Token.TRUE else False
 
@@ -64,7 +67,7 @@ class BlockStatement:
         self.block = block
        
     def __repr__(self):
-        return "\n\t".join([x.__repr__() for x in self.block])
+        return  "\t" + "\r\n\t".join([x.__repr__() for x in self.block])
         
     def eval(self,  env, lexer):
         for block in self.block:
@@ -79,8 +82,9 @@ class ScenarioStatement:
         return f"SCENARIO {self.test_name} {self.block}"
 
     def eval(self,  env, lexer):
+        env.add_stack(self.test_name, lexer)
         self.block.eval(env, lexer)
-        
+        env.pop_stack()
 
 class IfStatement:
     def __init__(self, condition, true_block, false_block: list):
@@ -89,44 +93,50 @@ class IfStatement:
         self.false_block = false_block
     
     def __repr__(self):
-        return f"SCENARIO {self.test_name} {self.block}"
+        return f"IF {self.condition}\nTHEN\n{self.true_block}\nELSE\n{self.false_block}\nFI"
 
     def eval(self,  env, lexer):
-        if self.condition.eval():
-            self.true_block.eval()
+        if self.condition.eval(env, lexer):
+            self.true_block.eval(env, lexer)
         else:
-            self.false_block.eval()
+            self.false_block.eval(env, lexer)
 
-    
 class DictStatement:
     def __init__(self, variables):
         self.variables =variables
 
-    def eval(self, env, lexer):   
-        return {x: y.eval(env, lexer) for x,y in self.variables.items()}   
+    def __repr__(self):
+        return "{" + f"{[(x, y) for x,y in self.variables.items()]}"[1:-1] + "}"
 
+    def eval(self, env, lexer):   
+        return {x.eval(env, lexer): y.eval(env, lexer) for x,y in self.variables.items()}   
 
 class DAssignmentStatement:
     def __init__(self, variable):
         self.variable = variable.value
      
     def __repr__(self):
-        return f"SCENARIO {self.test_name} {self.block}"
+        return f"${self.variable}"
 
     def eval(self,  env, lexer):
-        return env.get_value(self.variable)
+        return env.get_value(self.variable, lexer)
         
 class FunctionStatement:
     def __init__(self, function, arguments: DictStatement):
         self.function = function
         self.arguments =arguments
 
+    def __repr__(self):
+        return f"CALL {self.function.__name__}{self.arguments}"
     def eval(self, env, lexer):   
         return self.function(**self.arguments.eval(env, lexer))
 
 class ListStatement:
     def __init__(self, list_data):
         self.list_data = list_data
+
+    def __repr__(self):
+        return f"{self.list_data}"
        
     def eval(self, env, lexer):   
         return [x.eval(env, lexer) for x in self.list_data]

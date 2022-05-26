@@ -26,8 +26,8 @@ class Token(Enum):
 
 
 INBUILT_FUNCTION_LIST = {
-    "PACKET_FILTER": lambda **x: print("PACKET_FILTER", x),
-    "CHECK_TIMING":  lambda **x: print("CHECK_TIMING", x)
+    "PACKET_FILTER": lambda **x: print("=============>PACKET_FILTER", x),
+    "CHECK_TIMING":  lambda **x: print("=============>CHECK_TIMING", x)
 }
 
 

@@ -29,8 +29,9 @@ class Lexer:
 
     def raise_error(self, message, *, exception="Exception"):
         print("---------------------------------", file=stderr)
-        print(f"File \"{self.file_name}\", in line {self.lineno}", file=stderr)
+        print(f"File \"{self.file_name}\", in line {self.lineno}, pos {self.pos}", file=stderr)
         print(self.line, file=stderr)
+        print(" "*self.pos + "^")
         print(f"{exception}: {message}", file=stderr)
         print("---------------------------------", file=stderr)
         assert False
@@ -92,7 +93,7 @@ class Lexer:
         elif data == Token.FALSE:
             return TokenInfo(Token.FALSE, None)    
         elif data == Token.TRUE:
-            return TokenInfo(Token.FALSE, None)
+            return TokenInfo(Token.TRUE, None)
         elif data == Token.IMPORT:
             return TokenInfo(Token.IMPORT, None)
         elif is_function(data):

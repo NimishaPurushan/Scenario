@@ -27,7 +27,8 @@ class Parser:
             self._parse_scenario() or
             self._parse_if_else() or
             self._parse_function() or 
-            self._parse_list_or_dict())
+            self._parse_list_or_dict() or
+            self.lexer(f"Unknown Token: {self.token}"))
 
     def _get_next_statement(self):
         data = self.token
@@ -51,8 +52,9 @@ class Parser:
                 while self.token.value != "]":
                     self._get_next_statement()
                     data.append(self.next_expression())
-                    if self.token.value == "," or  "]":
-                        self.raise_error(f"expected \",\" or \"]\" found {self.token.value}", exception="SyntaxError")
+                    if not (self.token.value == "," or  self.token.value == "]"):
+                        self.raise_error(f"expected \",\" or \"]\" found \"{self.token.value}\"", exception="SyntaxError")
+                self._get_next_statement()
                 return ListStatement(data)
 
             if self.token.value == "{":
@@ -60,8 +62,14 @@ class Parser:
                 while self.token.value != "}":
                     self._get_next_statement()
                     key = self.next_expression()
-                    if self.token.value == ":" :
+                    if self.token.value != ":" :
                         self.raise_error(f"expected \":\" found {self.token.value}", exception="SyntaxError")
+                    self._get_next_statement()
+                    value = self.next_expression()
+                    if key in data:
+                        self.raise_error(f"duplicate argument {key}", exception="SyntaxError")
+                    data[key] = value
+                self._get_next_statement()
                 return DictStatement(data)
            
 
@@ -71,11 +79,11 @@ class Parser:
             current_line = self.lexer.lineno
             self._get_next_statement()
             arguments = {}
-            while current_line < self.lexer.lineno:
+            while current_line == self.lexer.lineno:
                 if self.token != Token.IDENTIFIER:
                     self.raise_error(f"expected {Token.IDENTIFIER} found {self.token}", exception="SyntaxError")
       
-                variable_name = self.token.value
+                variable_name = StringStatement(self.token)
                 self._is_next_token(Token.SYMBOL)
                 if self.token.value == "=" or  self.token.value == ":":
                     self._get_next_statement()
@@ -94,14 +102,14 @@ class Parser:
                 [], # true block
                 []] # false block
             ptr = 0
-            self._get_next_statement()
             while self.token != Token.IF_END:
                 if self.token == Token.ELSE:
                     ptr+=1
                 elif self.token == Token.EOF:
                     self.raise_error(f"unexpected \"EOF\" expected {Token.SCENARIO_END.value}", exception="SyntaxError")
                 blocks_command[ptr].append(self.next_expression())
-            return IfStatement(condition, blocks_command[True], blocks_command[False])
+            self._get_next_statement()
+            return IfStatement(condition, BlockStatement(blocks_command[False]), BlockStatement(blocks_command[True]))
 
     def _parse_scenario(self):
         if self.token == Token.SCENARIO_START:
@@ -116,18 +124,22 @@ class Parser:
                 if self.token == Token.EOF:
                     self.raise_error(f"unexpected \"EOF\" expected \"{Token.SCENARIO_END.value}\"", exception="SyntaxError")
                 blocks_command.append(self.next_expression())
-            return ScenarioStatement(test_name, blocks_command)
+            self._get_next_statement()
+            return ScenarioStatement(test_name, BlockStatement(blocks_command))
 
     def _parse_values(self):
         if self.token == Token.INTEGER:
+            data = self.token
             self._get_next_statement()
-            return IntegerStatement(self.token)
+            return IntegerStatement(data)
         elif self.token == Token.STRING:
+            data = self.token
             self._get_next_statement()
-            return StringStatement(self.token)
+            return StringStatement(data)
         elif self.token == Token.FALSE or self.token == Token.TRUE:
+            data = self.token
             self._get_next_statement()
-            return BooleanStatement(self.token)            
+            return BooleanStatement(data)            
 
     def _parse_import(self):
         if self.token == Token.IMPORT:

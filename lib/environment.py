@@ -1,5 +1,9 @@
 from logging import exception
 from sys import stderr
+# from .logger import FrameworkLogger
+#
+# log = FrameworkLogger(__name__)
+
 
 class GlobalEnv:
     # format:
@@ -16,38 +20,45 @@ class GlobalEnv:
     def __init__(self, file_name):
         self.file_name = file_name
         self._ENV = [{}]
-        self._stack_ptr = 0 # 0 pos means  global variable    
+        self._stack_ptr = 0  # 0 pos means  global variable
         self._ENV[self._stack_ptr]["__name__"] = "main"
         self._ENV[self._stack_ptr]["__lineno__"] = 0
         self._ENV[self._stack_ptr]["__line__"] = ""
-
-    
         
     def add_stack(self, function_name, lexer):
-        self._stack_ptr += 1
         self._ENV.append(dict())
+        print(len(self._ENV), self._stack_ptr)
+        self._stack_ptr += 1
         self._ENV[self._stack_ptr]["__name__"] = function_name
         self._ENV[self._stack_ptr]["__lineno__"] = lexer.lineno
         self._ENV[self._stack_ptr]["__line__"] = lexer.line
 
     def store_value(self, name, value, is_global=False):
         self._ENV[0 if is_global else self._stack_ptr][name] = value
+        print(self._ENV)
         
     def get_value(self, name, lexer):
         # check local stack
-        if name in  self._ENV[self._stack_ptr]:
-            return self._ENV[self._stack_ptr]
+        print("name to search:", name)
+        print("stacptr:",self._stack_ptr)
+        print(self._ENV)
+        if name in self._ENV[self._stack_ptr]:
+            return self._ENV[self._stack_ptr][name]
         # check the last stack
         elif self._stack_ptr - 1 > 0 and name in self._ENV[self._stack_ptr]:
             return self._ENV[self._stack_ptr]
         # check if its in global variable
-        elif name in self._ENV[0] :
+        elif name in self._ENV[0]:
+            print("came here")
+            print(type(self._ENV[0][name]))
+            print(self._ENV[0][name])
             return self._ENV[0][name]
         else:
             lexer.raise_error(f"{name} does not exist", exception="NameError")
 
     def pop_stack(self):
         self._ENV.pop()
+        self._stack_ptr -= 1
 
     def traceback(self):
         print("Traceback:", file=stderr)

@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Any, NamedTuple
+from .inbuilt_functions import PcapAnalyser
 
 
 class Token(Enum):
@@ -12,7 +13,7 @@ class Token(Enum):
     IF_START = "IF_START"
     ELSE = "ELSE"
     IF_END = "IF_END"
-    SCENARIO_START ="SCENARIO_START"
+    SCENARIO_START = "SCENARIO_START"
     SCENARIO_END = "SCENARIO_END"
     NONE = "NONE"
     FALSE = "FALSE"
@@ -20,14 +21,16 @@ class Token(Enum):
     INTEGER = 13
     INBUILT_FUNCTION = 14
     IMPORT = "IMPORT"
+    SETUP = "SETUP"
+    SETUP_END = "SETUP_END"
 
     def __eq__(self, val):
         return self.value == val
 
 
 INBUILT_FUNCTION_LIST = {
-    "PACKET_FILTER": lambda **x: print("=============>PACKET_FILTER", x),
-    "CHECK_TIMING":  lambda **x: print("=============>CHECK_TIMING", x)
+    "PACKET_FILTER": PcapAnalyser().tshark_validate,
+    "CHECK_TIMING_INFO":  PcapAnalyser().check_timing
 }
 
 

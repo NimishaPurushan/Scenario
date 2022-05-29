@@ -14,10 +14,9 @@ class Parser:
         self._get_next_statement()
 
     def raise_error(self, message, *, exception="Exception"):
-       self.lexer.raise_error(message, exception=exception)
+        self.lexer.raise_error(message, exception=exception)
 
     def next_expression(self):
-        log.info(self.token)
         if self.token == Token.EOF:
             raise StopIteration()
         return (
@@ -37,7 +36,7 @@ class Parser:
 
     def _is_next_token(self, expected_token=None, expected_value=None):
         self._get_next_statement()
-        if expected_token == None or  self.token != expected_token:
+        if expected_token == None or self.token != expected_token:
             self.raise_error(f"expected {expected_token} found {self.token}", exception="TypeError")
                    
         if (expected_value == None and expected_value == self.token.value ):
@@ -45,7 +44,6 @@ class Parser:
         return True
     
     def _parse_list_or_dict(self):
-
         if self.token == Token.BRACKET:
             if self.token.value == "[":
                 data = []
@@ -71,7 +69,6 @@ class Parser:
                     data[key] = value
                 self._get_next_statement()
                 return DictStatement(data)
-           
 
     def _parse_function(self):
         if self.token == Token.INBUILT_FUNCTION:
@@ -89,7 +86,7 @@ class Parser:
                     self._get_next_statement()
                     if variable_name in arguments:
                         self.raise_error(f"duplicate argument {variable_name}", exception="SyntaxError")
-                    arguments[variable_name]  =  self.next_expression()
+                    arguments[variable_name] = self.next_expression()
                 else:
                     self.raise_error(f"expected \":\" or \"=\" found \"{self.token.value}\"", exception="SyntaxError")
             return FunctionStatement(function, DictStatement(arguments))
@@ -170,8 +167,23 @@ class Parser:
             variable_name = self.token
             self._get_next_statement()
             return DAssignmentStatement(variable_name)
-            
 
+    def _parse_setup(self):
+        if self.token == Token.SETUP:
+            self._get_next_statement()
+            if self.token.value != ":":
+                self.raise_error(f"expected \":\" found \"{self.token.value}\"", exception="SyntaxError")
+            self._get_next_statement()
+            test_name = self.token
+            blocks_command = []
+            self._get_next_statement()
+            while self.token != Token.SETUP_END:
+                if self.token == Token.EOF:
+                    self.raise_error(f"unexpected \"EOF\" expected \"{Token.SCENARIO_END.value}\"",
+                                     exception="SyntaxError")
+                blocks_command.append(self.next_expression())
+            self._get_next_statement()
+            return ScenarioStatement(test_name, BlockStatement(blocks_command))
 
     def __next__(self): return self.next_expression()
 

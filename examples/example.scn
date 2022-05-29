@@ -1,15 +1,26 @@
 SCENARIO   : "SRHFW1000.scenario"
-IMPORT	   : "./lib/lexer.py",   "./lib/parser.py", "./lib/utils.py"
+IMPORT	   : "examples\\variable.py", "examples\\script.py"
 
-LogFileType : "PCAP"
-TsharkPAth  : "C:\\Program Files\\Wireshark"
+SET    LogFileType : "PCAP"
+SET    TsharkPath  : "C:\\Program Files\\Wireshark"
 
-SCENARIO_START: TEST_2
-    RC_VAR_abc= PACKET_FILTER   pcap="..\\wireshark_parsing_tool\\silentcall.pcapng"      pcap_filter="(fxl-5.0.0.msgType==111)"     protocol="fxl-5.0.0"    ip=${IP}    port=${PORT}	    message_info=[{'fxl-5.0.0.msgType': '111'},{'fxl-5.0.0.msgType': '111'}]
-    IF_START ${CONDITION_1}
-        PACKET_FILTER    pcap="..\\wireshark_parsing_tool\\silentcall.pcapng"     pcap_filter="(fxl-5.0.0.msgType==111)"    protocol="fxl-5.0.0"    ip=${IP}    port=${PORT}    condition=FALSE
-    IF_END
-    IF_START ${CONDITION_2}
-        RC_VAR_abc =    	PACKET_FILTER    pcap="../wireshark_parsing_tool/silentcall.pcapng"     pcap_filter="(fxl-5.0.0.msgType==111)"    protocol="fxl-5.0.0"    ip=${IP}    port=${PORT} 		condition=FALSE
-    IF_END
-SCENARIO_END
+
+SCENARIO: TEST_1c
+    RC_VAR_abc = PACKET_FILTER   pcap_filename=${pcap_file}     read_filter="(fxl-5.0.0.msgType==111)"     protocol="fxl-5.0.0"
+    CHECK_TIMING_INFO   pcap_packets=${RC_VAR_abc}   message={"fxl-5.0.0.msgType": "413"}   start_message={"fxl-5.0.0.msgType": "409"}      stop_message={"fxl-5.0.0.msgType": "405"}
+    IF ${CONDITION_1}
+        PACKET_FILTER    pcap_filename=${pcap_file}     read_filter="(fxl-5.0.0.msgType==111)"    protocol="fxl-5.0.0"
+    END
+    IF ${CONDITION_2}
+        RC_VAR_abc =    PACKET_FILTER    pcap_filename=${pcap_file}     read_filter="(fxl-5.0.0.msgType==111)"    protocol="fxl-5.0.0"
+    END
+END
+
+SCENARIO: TEST_2
+    IF ${CONDITION_1}
+        PACKET_FILTER    pcap_filename=${pcap_file}     read_filter="(fxl-5.0.0.msgType==111)"    protocol="fxl-5.0.0"
+    END
+    IF ${CONDITION_2}
+        RC_VAR_abc =    PACKET_FILTER    pcap_filename=${pcap_file}     read_filter="(fxl-5.0.0.msgType==111)"    protocol="fxl-5.0.0"
+    END
+END

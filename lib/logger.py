@@ -3,6 +3,7 @@ from logging.handlers import RotatingFileHandler
 from logging import Formatter
 from logging.handlers import DatagramHandler
 from datetime import datetime
+from sys import stderr
 
 '''LOGGING VARIABLES'''
 # The below hard-coded values shall be used
@@ -89,6 +90,20 @@ class ScenarioLogger(FrameworkLogger):
             if CONSOLE_LOG_TO_DISPLAY is True:
                 print(str(datetime.now()) + '\t:\t' + msg, flush=True)
             print(str(datetime.now()) + '\t:\t' + msg, file=CONSOLE_FILE, flush=True)
+        except UnicodeEncodeError as err:
+            # Need to understand this better than just to bypass !!
+            self.logger.warning(f"Unable to print {msg} on stdout. Hence not printing it.")
+
+    def console_error(self, msg):
+        try:
+            msg = str(msg)
+        except Exception as err:
+            msg = str(msg.encode('utf-8', errors='ignore'))
+        self.logger.info(f"Console message -> {msg}")
+        try:
+            if CONSOLE_LOG_TO_DISPLAY is True:
+                print(str(datetime.now()) + '\t:\t' + msg, flush=True)
+            print(str(datetime.now()) + '\t:\t' + msg, file=stderr, flush=True)
         except UnicodeEncodeError as err:
             # Need to understand this better than just to bypass !!
             self.logger.warning(f"Unable to print {msg} on stdout. Hence not printing it.")

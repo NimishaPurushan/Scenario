@@ -84,7 +84,7 @@ INBUILT_FUNCTION_LIST = {
 OPERATOR_TABLE = {
     b'+' : Token.Plus,
     b'-' : Token.Minus,
-    '*' : Token.Multiply,
+    b'*' : Token.Multiply,
     b'/' : Token.Divide,
     b'=' : Token.Assignment,
     '==': Token.Eq,

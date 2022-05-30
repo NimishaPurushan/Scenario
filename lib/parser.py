@@ -1,4 +1,5 @@
 from logging import exception
+from logging.config import IDENTIFIER
 from .logger import FrameworkLogger, ScenarioLogger
 from .syntax_tree import *
 from .tokens import Token, INFIX_OPERATION
@@ -13,7 +14,6 @@ class Parser:
         self._get_next_token()
 
     def next_expression(self):
-        print(self.token, self.lexer.data)
         if self.token == Token.Eof:
             raise StopIteration()
         return (
@@ -39,52 +39,59 @@ class Parser:
         raise  SyntaxError(f"Unknown Token:{self.token}  data:\"{self.lexer.data}\" ord:{[x for x in self.lexer.data]}")
     
     def _parse_list(self):
-        if self.lexer.data == Token.LBrace:
+        if self.token == Token.LBrace:
             data = []
-            while self.lexer.data != Token.RBrace:
+            while self.token != Token.RBrace:
                 self._get_next_token()
                 data.append(self.next_expression())
-                if not (self.lexer.data == Token.Comma or  self.lexer.data == Token.RBrace):
+                if not (self.token == Token.Comma or  self.token == Token.RBrace):
                     raise SyntaxError(f"expected \",\" or \"]\" found \"{self.lexer.data}\"")
             self._get_next_token()
             return ListStatement(data)
     
     def _parse_dict(self):
-        if self.lexer.data == Token.LBrace:
+        if self.token == Token.LCurly:
             data = {}
-            while self.lexer.data != Token.RBrace:
+            while self.token != Token.RCurly:
                 self._get_next_token()
                 key = self.next_expression()
-                if self.lexer.data != ":" :
-                    raise SyntaxError(f"expected \":\" found {self.lexer.data}")
+                if self.token != Token.Colon :
+                    raise SyntaxError(f"{self.token}expected \":\" found {self.lexer.data}")
                 self._get_next_token()
                 value = self.next_expression()
                 if key in data:
                     raise SyntaxError(f"duplicate argument {key}")
                 data[key] = value
+
             self._get_next_token()
             return DictStatement(data)
 
     def _parse_function(self):
         if self.token == Token.Function:
             function = self.lexer.data
-            current_line = self.lexer.lineno
             self._get_next_token()
-            arguments = {}
-            while current_line == self.lexer.lineno:
-                if self.token != Token.Identifier:
-                    raise SyntaxError(f"expected {Token.Identifier} found {self.token}")
-      
-                variable_name = StringStatement(self.token)
-                self._get_next_token
-                if self.token == Token.Assignment:
+            args = [] 
+            pos = lambda: self.lexer.reader.pos
+            current_pos = pos
+            while pos() == current_pos:
+                self._get_next_token()
+                val = self.next_expression()
+                args.append()
+                current_pos = pos()
+
+            kargs = {}
+            while self.token == Token.Identifier:
+                variable_name = StringStatement(self.lexer.data)
+                self._get_next_token()
+                if self.token == Token.Colon:
                     self._get_next_token()
-                    if variable_name in arguments:
+                    if variable_name in kargs:
                         raise SyntaxError(f"duplicate argument {variable_name}")
-                    arguments[variable_name] = self.next_expression()
+                    kargs[variable_name] = self.next_expression()
                 else:
-                    raise SyntaxError(f"expected \"=\" found \"{self.lexer.data}\"")
-            return FunctionStatement(function, DictStatement(arguments))
+                    raise SyntaxError(f"expected \":\" found \"{self.lexer.data}\"")
+                
+            return FunctionStatement(function, ListStatement(args), DictStatement(kargs))
 
     def _parse_if_else(self):
         if self.token == Token.If:
@@ -106,12 +113,11 @@ class Parser:
     def _parse_scenario(self):
         if self.token == Token.Scenario:
             self._get_next_token()
-            if self.token != Token.Colon:
-                raise SyntaxError(f"expected \":\" found \"{self.lexer.data}\"")
+            if self.token != Token.Identifier:
+                raise SyntaxError(f"expected \"Identifier\" found \"{self.lexer.data}\"")
             self._get_next_token()
             test_name = self.token
             blocks_command = []
-            self._get_next_token()
             while self.token != Token.End:
                 if self.token == Token.Eof:
                     raise SyntaxError(f"unexpected \"EOF\" expected \"{Token.End}\"")
@@ -132,9 +138,7 @@ class Parser:
             return self._parse_infix_statement(lhs) or lhs
 
     def _parse_infix_statement(self, lhs):
-        print(self.token)
         if self._is_operator():
-            print(self._is_operator())
             operator = self.token
             self._get_next_token()
             rhs = self.next_expression()
@@ -168,7 +172,6 @@ class Parser:
             if self.token == Token.Assignment :
                 self._get_next_token()
                 return AssignmentStatment(lhs,  self.next_expression())
-            self._get_next_token()
             return self._parse_infix_statement(lhs) or DAssignmentStatement(lhs)
 
   

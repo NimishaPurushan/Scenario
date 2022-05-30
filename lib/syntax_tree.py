@@ -38,13 +38,12 @@ class ImportStatement:
         from lib.file_reader import FileReader
         for file_name in self.value:
             reader = FileReader(file_name)
-            global_env = GlobalEnv(reader)
             try:
                 log.info(f"Importing File: {file_name}")
                 lexer = Lexer(reader)
                 parser = Parser(lexer)
                 for p in parser:
-                    p.eval(global_env)
+                    p.eval(env)
             except Exception as E:
                 reader.read_line()
                 sc_log.console_error(f"---------------------------------")
@@ -53,7 +52,7 @@ class ImportStatement:
                 sc_log.console_error(" "*(reader.pos-1) + "^")
                 sc_log.console_error(f"{type(E).__name__}: {E}")
                 sc_log.console_error("---------------------------------")
-                global_env.traceback()
+                env.traceback()
                 import traceback
                 traceback.print_exc()
                 exit(0)
@@ -76,14 +75,14 @@ class StringStatement:
 
 class BooleanStatement:
 
-    def __init__(self, tokeninfo):
-        self.token = tokeninfo.token
+    def __init__(self, token):
+        self.token = token
 
     def __repr__(self):
         return "TRUE" if self.token else "FALSE"
 
     def eval(self, env):
-        return True if self.token == Token.TRUE else False
+        return True if self.token == Token.Truthy else False
 
 
 class AssignmentStatment:
@@ -171,19 +170,6 @@ class DAssignmentStatement:
         return env.get_value(self.variable)
         
 
-class FunctionStatement:
-
-    def __init__(self, function, arguments: DictStatement):
-        self.function = function
-        self.arguments = arguments
-
-    def __repr__(self):
-        return f"CALL {self.function.__name__}{self.arguments}"
-
-    def eval(self, env):   
-        return self.function(**self.arguments.eval(env))
-
-
 class ListStatement:
 
     def __init__(self, list_data):
@@ -196,11 +182,22 @@ class ListStatement:
         return [x.eval(env) for x in self.list_data]
 
 
+class FunctionStatement:
+
+    def __init__(self, function, args: ListStatement, kargs: DictStatement):
+        self.function = function
+        self.kargs = kargs
+        self.args = args
+
+    def __repr__(self):
+        return f"CALL {self.function.__name__}{self.args}{self.kargs}"
+
+    def eval(self, env):   
+        return self.function(*self.args.eval(env),**self.kargs.eval(env))
 
 
 
 class InfixStatement:
-  
 
     def __init__(self, lhs, op, rhs: list):
         self.lhs = lhs
@@ -211,5 +208,4 @@ class InfixStatement:
         return f"{self.lhs}{self.op}{self.rhs}\nFI"
 
     def eval(self,  env):
-        print(self.op)
         return INFIX_OPERATION[self.op](self.lhs.eval(env), self.rhs.eval(env))

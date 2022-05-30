@@ -46,6 +46,7 @@ class Token(Enum):
     Identifier   = 3   # assignment 
     DIdentifier  = 4  # read only
     Function     = 8
+    RSlash       = 9
    
     def __eq__(self, val): return self.value == val
 
@@ -57,6 +58,8 @@ LOOKUP_TABLE = {
     b':' : Token.Colon,
     b'{' : Token.LCurly,
     b'}' : Token.RCurly,
+    b'\\' : Token.RSlash,
+    b',' : Token.Comma
 }
 
 KEYWORD_TABLE = {
@@ -74,7 +77,7 @@ INBUILT_FUNCTION_LIST = {
     "PACKET_FILTER"    : PcapAnalyser().tshark_validate,
     "CHECK_TIMING_INFO":  PcapAnalyser().check_timing,
     "SET_TSHARK_PATH"  : PcapAnalyser.set_tshark_patch,
-    "SHOW_PRINT"       : BaseLogger.set_display,
+    "SET_PRINT"       : BaseLogger.set_display,
     "PRINT"            : print
 }
 

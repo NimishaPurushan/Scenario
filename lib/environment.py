@@ -35,13 +35,11 @@ class GlobalEnv:
 
     def store_value(self, name, value):
         self._ENV[self._stack_ptr][name] = value
-        print(self._ENV)
         
     def get_value(self, name):
         # check local stack
         print("name to search:", name)
         print("stacptr:",self._stack_ptr)
-        print(self._ENV)
         if name in self._ENV[self._stack_ptr]:
             return self._ENV[self._stack_ptr][name]
         # check the last stack

@@ -39,9 +39,7 @@ class Lexer:
             or self._get_operator_token()  
             or self._get_identfier_token() 
             or self._get_variable_token()  
-            or self._get_eol()             
-            or Token.Unknown
-        )
+            or self._get_eol())
 
     def _get_eol(self):
         if self._is_eof():
@@ -50,7 +48,10 @@ class Lexer:
     def _get_easy_tokens(self) -> None:
         # these are one charector tokens that dont
         # need extra processing
-        return LOOKUP_TABLE.get(self.ch, None)      
+        if self.ch in LOOKUP_TABLE:
+            token = LOOKUP_TABLE[self.ch]
+            self._get_next_char()
+            return token
 
     def _get_next_char(self):
         self.ch = self.reader.ch
@@ -90,7 +91,7 @@ class Lexer:
         elif self.ch == b'\'':
             self._byte_data = bytearray()
             self._get_next_char()
-            while self.ch != b'\"':
+            while self.ch != b'\'':
                 self._byte_data.extend(self.ch)
                 self._get_next_char()
                 
@@ -100,12 +101,15 @@ class Lexer:
     def _get_identfier_token(self) -> Token:
         if self._is_identifier():
             self._byte_data = bytearray()
-            while self._is_identifier():
+            while self._is_identifier() or self._is_number():
                 self._byte_data.extend(self.ch)
                 self._get_next_char()
-            return (
-                KEYWORD_TABLE.get(self.data, None) or
-                INBUILT_FUNCTION_LIST.get(self.data, Token.Unknown))
+            if self.data in KEYWORD_TABLE:
+                return KEYWORD_TABLE[self.data]
+            elif self._is_function():
+                return Token.Function
+            else:
+                return Token.Identifier
         
     def _get_variable_token(self) -> Token:
         if self.ch == b'$':
@@ -166,6 +170,9 @@ class Lexer:
             b'a' <= self.ch <= b'z' 
             or b'A' <= self.ch <= b'Z' 
             or b'_' == self.ch)
+
+    def _is_function(self) -> bool:
+        return self.data in INBUILT_FUNCTION_LIST
 
     # making Lexer class iterable
     def __next__(self): return self.token

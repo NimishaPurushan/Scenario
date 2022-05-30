@@ -2,7 +2,7 @@ from logging import exception
 from logging.config import IDENTIFIER
 from .logger import FrameworkLogger, ScenarioLogger
 from .syntax_tree import *
-from .tokens import Token, INFIX_OPERATION
+from .tokens import Token, INFIX_OPERATION, INBUILT_FUNCTION_LIST
 
 log = FrameworkLogger(__name__)
 tc_log = ScenarioLogger(__name__)
@@ -68,16 +68,13 @@ class Parser:
 
     def _parse_function(self):
         if self.token == Token.Function:
-            function = self.lexer.data
+            function = INBUILT_FUNCTION_LIST[self.lexer.data]
             self._get_next_token()
             args = [] 
-            pos = lambda: self.lexer.reader.pos
-            current_pos = pos
-            while pos() == current_pos:
-                self._get_next_token()
-                val = self.next_expression()
-                args.append()
-                current_pos = pos()
+            pos = lambda: self.lexer.reader.line_no
+            current_pos = pos()
+            while pos() == current_pos and self.token != Token.Identifier:
+                args.append( self.next_expression())
 
             kargs = {}
             while self.token == Token.Identifier:
@@ -90,7 +87,6 @@ class Parser:
                     kargs[variable_name] = self.next_expression()
                 else:
                     raise SyntaxError(f"expected \":\" found \"{self.lexer.data}\"")
-                
             return FunctionStatement(function, ListStatement(args), DictStatement(kargs))
 
     def _parse_if_else(self):

@@ -27,9 +27,9 @@ if not args.scn_file:
     exit()
 
 
-def Evaluator(lexer, parser, env):
-    for parser in parser:
-        parser.eval(env, lexer)
+def Evaluator(ast_list, env):
+    for p in ast_list:
+        p.eval(env)
 
 
 
@@ -50,7 +50,7 @@ def main(file_name=args.scn_file):
                 p.eval(global_env)
             else:
                 ast_list.append(p)
-        # Evaluator(lexer, parser, env=global_env)
+        Evaluator(ast_list, env=global_env)
     except Exception as E:
         reader.read_line()
         sc_log.console_error(f"---------------------------------")

@@ -17,21 +17,21 @@ class GlobalEnv:
     #      "LocalVariable": "A",
     #      "LocalVariable": "B",
     #   }]
-    def __init__(self, file_name):
-        self.file_name = file_name
+    def __init__(self, reader):
+        self.reader = reader
         self._ENV = [{}]
         self._stack_ptr = 0  # 0 pos means  global variable
         self._ENV[self._stack_ptr]["__name__"] = "main"
         self._ENV[self._stack_ptr]["__lineno__"] = 0
         self._ENV[self._stack_ptr]["__line__"] = ""
         
-    def add_stack(self, function_name, lexer):
+    def add_stack(self, function_name):
         self._ENV.append(dict())
-        print(len(self._ENV), self._stack_ptr)
         self._stack_ptr += 1
+        self._ENV[self._stack_ptr]["__file__"] = self.reader.file_name
         self._ENV[self._stack_ptr]["__name__"] = function_name
-        self._ENV[self._stack_ptr]["__lineno__"] = lexer.lineno
-        self._ENV[self._stack_ptr]["__line__"] = lexer.line
+        self._ENV[self._stack_ptr]["__lineno__"] = self.reader.line_no
+        self._ENV[self._stack_ptr]["__line__"] = self.reader.line
 
     def store_value(self, name, value, is_global=False):
         self._ENV[0 if is_global else self._stack_ptr][name] = value
@@ -62,11 +62,12 @@ class GlobalEnv:
 
     def traceback(self):
         print("Traceback:", file=stderr)
-        while len(self._ENV) > 0:
-            stack = self._ENV.pop(0)
-            caller = stack["__name__"]
-            line_no = stack["__lineno__"]
-            print(f"File \"{self.file_name}\", line {line_no}, in {caller}")
+        while len(self._ENV) > 1:
+            stack     = self._ENV.pop(1)
+            caller    = stack["__name__"]
+            line_no   = stack["__lineno__"]
+            file_name = stack["__file__"]
+            print(f"File \"{file_name}\", line {line_no}, in {caller}")
             line = stack["__line__"]
             print("\t"+line)
 

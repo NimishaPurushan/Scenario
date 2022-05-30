@@ -1,26 +1,25 @@
-SCENARIO   : "SRHFW1000.scenario"
-IMPORT	   : "examples\\variable.py", "examples\\script.py"
+# this is an example file for how scenario file will work
 
-SET    LogFileType : "PCAP"
-SET    TsharkPath  : "C:\\Program Files\\Wireshark"
+# IMPORT will import the file 
+# the file name should be as string i.e covered in single quotes or double quotes
+# you can have multiple imports in a given line 
+
+IMPORT     "./script.scn", "./variable.scn"
 
 
-SCENARIO: TEST_1c
-    RC_VAR_abc = PACKET_FILTER   pcap_filename=${pcap_file}     read_filter="(fxl-5.0.0.msgType==111)"     protocol="fxl-5.0.0"
-    CHECK_TIMING_INFO   pcap_packets=${RC_VAR_abc}   message={"fxl-5.0.0.msgType": "413"}   start_message={"fxl-5.0.0.msgType": "409"}      stop_message={"fxl-5.0.0.msgType": "405"}
-    IF ${CONDITION_1}
-        PACKET_FILTER    pcap_filename=${pcap_file}     read_filter="(fxl-5.0.0.msgType==111)"    protocol="fxl-5.0.0"
-    END
-    IF ${CONDITION_2}
-        RC_VAR_abc =    PACKET_FILTER    pcap_filename=${pcap_file}     read_filter="(fxl-5.0.0.msgType==111)"    protocol="fxl-5.0.0"
-    END
-END
+# SET is used to modify inbuilt settings
+SET_TSHARK_PATH             "C:\\Program Files\\Wireshark"   
+SHOW_PRINT                   TRUE
+
+
 
 SCENARIO: TEST_2
+    RC_VAR_abc= PACKET_FILTER   pcap="..\\wireshark_parsing_tool\\silentcall.pcapng"      pcap_filter="(fxl-5.0.0.msgType==111)"     protocol="fxl-5.0.0"    ip=${IP}    port=${PORT}	    message_info=[{'fxl-5.0.0.msgType': '111'},{'fxl-5.0.0.msgType': '111'}]
     IF ${CONDITION_1}
-        PACKET_FILTER    pcap_filename=${pcap_file}     read_filter="(fxl-5.0.0.msgType==111)"    protocol="fxl-5.0.0"
+        PACKET_FILTER    pcap="..\\wireshark_parsing_tool\\silentcall.pcapng"     pcap_filter="(fxl-5.0.0.msgType==111)"    protocol="fxl-5.0.0"    ip=${IP}    port=${PORT}    condition=FALSE
     END
+    
     IF ${CONDITION_2}
-        RC_VAR_abc =    PACKET_FILTER    pcap_filename=${pcap_file}     read_filter="(fxl-5.0.0.msgType==111)"    protocol="fxl-5.0.0"
+        RC_VAR_abc =    	PACKET_FILTER    pcap="../wireshark_parsing_tool/silentcall.pcapng"     pcap_filter="(fxl-5.0.0.msgType==111)"    protocol="fxl-5.0.0"    ip=${IP}    port=${PORT} 		condition=FALSE
     END
 END

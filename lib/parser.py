@@ -138,7 +138,6 @@ class Parser:
             operator = self.token
             self._get_next_token()
             rhs = self.next_expression()
-            self._get_next_token()
             return InfixStatement(lhs, operator.value, rhs)
 
     def _parse_boolean(self):

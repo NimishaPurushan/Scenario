@@ -1,4 +1,5 @@
-from .tokens import Token, TokenInfo, is_function, INBUILT_FUNCTION_LIST
+from lib2to3.pgen2.token import LBRACE
+from .tokens import *
 from .utils import file_next_iterator
 from .logger import FrameworkLogger, ScenarioLogger
 
@@ -6,176 +7,166 @@ log = FrameworkLogger(__name__)
 sc_log = ScenarioLogger(__name__)
 
 
+__all__ = ("Lexer",)
+
+
+
 class Lexer:
-    def __init__(self, file_name):
-        self.file_name = file_name
-        self.lineno = 0  # for showing error message
-        # string are immutable. It is an expensive to slice string unnecessarily.
-        # so just read the position of string accordingly
-        self.pos = 0  # points to next position in line
-        self.line = ""
-        self.char = ""  # current char
-        self.file_iter = file_next_iterator(self.file_name)
-        self._get_next_line()
-
-    def next_token(self) -> TokenInfo:
+    
+    __slots__ = ("reader", "ch", "_byte_data", "_exception")
+    
+    def __init__(self, reader):
+        self.reader = reader
+        self.ch = b''
+        self._get_next_char()
+        self._byte_data = bytearray() # temporary buffer of data
+  
+    @property
+    def data(self) -> str:
+        return self._byte_data.decode()
+    
+    @property
+    def token(self) -> Token:
         """ returns next token """
-        try:
-            return (self._remove_white_space() or
-                    self._get_number_token() or
-                    self._get_string_token() or
-                    self._get_identfier_token() or
-                    self._get_symbol_token())
-        except StopIteration:
-            return TokenInfo(Token.EOF, None)
+        return (
+            # preprocessing
+            self._remove_white_space()  
+            or self._remove_comment()      
+            or self._get_easy_tokens()    
+            # returning value
+            or self._get_number_token()   
+            or self._get_string_token()    
+            or self._get_operator_token()  
+            or self._get_identfier_token() 
+            or self._get_variable_token()  
+            or self._get_eol()             
+            or Token.Unknown
+        )
 
-    def raise_error(self, message, *, exception="Exception"):
-        sc_log.console_error(f"---------------------------------")
-        sc_log.console_error(f"File \"{self.file_name}\", in line {self.lineno}, pos {self.pos}o0")
-        sc_log.console_error(self.line)
-        sc_log.console_error(" "*self.pos + "^")
-        sc_log.console_error(f"{exception}: {message}")
-        sc_log.console_error("---------------------------------")
-        assert False
+    def _get_eol(self):
+        if self._is_eof():
+            return Token.Eof
+
+    def _get_easy_tokens(self) -> None:
+        # these are one charector tokens that dont
+        # need extra processing
+        return LOOKUP_TABLE.get(self.ch, None)      
 
     def _get_next_char(self):
-        """ reads the current postion of string while updating position """
-        if self.pos >= len(self.line):
-            self._get_next_line()
-        data = self.char
-        self.char = self.line[self.pos]
-        self.pos += 1
-        return data
+        self.ch = self.reader.ch
 
-    def _get_next_line(self):
-        self.lineno, self.line = next(self.file_iter)
-        self.pos = 0
-   
-    def _remove_white_space(self):
+    def _remove_white_space(self) -> None:
         while self._is_whitespace():
             self._get_next_char()
+    
+    def _remove_comment(self) -> None:
+        if self._is_comment():
+            while not self._is_newline():
+                self._get_next_char()
+            return self.token
 
-    def _get_number_token(self):
+    def _get_number_token(self) -> Token:
         """ the language has int and float types."""
         if self._is_number():
-            _start = self.pos
+            self._byte_data = bytearray()
             while self._is_number():
+                self._byte_data.extend(self.ch)
                 self._get_next_char()
-            data = self.line[_start-1: self.pos-1]
-            return TokenInfo(Token.INTEGER, data) 
-            
-    def _get_string_token(self):
-        """ string sart with either " or '. 
-        There is no multi line string """
-        for ch in ["\"", "\'"]:
-            if self.char == ch:
-                _start = self.pos
-                self._get_next_char()
-                while self.char != ch:
-                    self._get_next_char()
-                    if self._is_newline():
-                        self.raise_error(f"expected {ch} found newline")
-
-                data = self.line[_start: self.pos-1]
-                self._get_next_char()
-                return TokenInfo(Token.STRING, data)
-
-    @staticmethod
-    def _get_keyword_token(data):
-        """ checks if identifier is string """
-        if data == Token.IF_START:
-            return TokenInfo(Token.IF_START, None)
-        elif data == Token.IF_END:
-            return TokenInfo(Token.IF_END, None)
-        elif data == Token.SCENARIO_START:
-            return TokenInfo(Token.SCENARIO_START, None)
-        elif data == Token.SCENARIO_END:
-            return TokenInfo(Token.SCENARIO_END, None)
-        elif data == Token.ELSE:
-            return TokenInfo(Token.ELSE, None)
-        elif data == Token.FALSE:
-            return TokenInfo(Token.FALSE, None)    
-        elif data == Token.TRUE:
-            return TokenInfo(Token.TRUE, None)
-        elif data == Token.IMPORT:
-            return TokenInfo(Token.IMPORT, None)
-        elif is_function(data):
-            return TokenInfo(Token.INBUILT_FUNCTION, INBUILT_FUNCTION_LIST[data])    
-        else:
-            return TokenInfo(Token.IDENTIFIER, data)
-     
-    def _get_identfier_token(self):
-        """ string also can exist without quotes. 
-        But it starts but must starts with underscore or string.
-        ${} symbol is for reading variable"""
-        if self._is_identifier():
-            _start = self.pos
-            while self._is_identifier() or self._is_number():
-                self._get_next_char()
-            data = self.line[_start-1: self.pos-1]
-            return self._get_keyword_token(data)
-        
-        if self.char == "$":
-            if self._is_next_char("{"):
-                self.raise_error("expected '{' found '%s'" % self.char)
-            _start = self.pos
-            while self.char != "}":
-                self._get_next_char()
-                if self._is_newline():
-                    self.raise_error("variable access not terminated by '}'")
             self._get_next_char()
-            data = self.line[_start+1: self.pos-2]
-            return TokenInfo(Token.D_IDENTIFIER, data)
-
-    def _get_symbol_token(self):
-        """ multi symbols like """
-        if self._is_symbol():
-            data = self._get_next_char()
-            if self._is_next_char("="):
+            return Token.Integer
+            
+    def _get_string_token(self) -> Token:
+        """ string sart with either " or '. 
+        all strings are multiline """
+        if self.ch == b'\"':
+            self._byte_data = bytearray()
+            self._get_next_char()
+            while self.ch != b'\"':
+                self._byte_data.extend(self.ch)
                 self._get_next_char()
-                return TokenInfo(Token.SYMBOL, self.line[self.pos-1:self.pos])
-            else:
-                return TokenInfo(Token.SYMBOL, data)
-        elif self._is_bracket():
-            data = self._get_next_char()
-            return TokenInfo(Token.BRACKET, data)
-        elif self.char == ":" or self.char == ",":
-            data = self._get_next_char()
-            return TokenInfo(Token.SYMBOL, data)
-    
-    def _is_newline(self):
-        return self.char == "\n" or self.char == "\t"
+            self._get_next_char()
+            return Token.String
 
-    def _is_bracket(self):
-        return (self.char == "{" or self.char == "}" or
-                self.char == "[" or self.char == "]" or
-                self.char == "(" or self.char == ")")
+        elif self.ch == b'\'':
+            self._byte_data = bytearray()
+            self._get_next_char()
+            while self.ch != b'\"':
+                self._byte_data.extend(self.ch)
+                self._get_next_char()
+                
+            self._get_next_char()
+            return Token.String
 
-    def _is_next_char(self, ch: str) -> bool:
-        """ reads if the next postion only if it is expected value"""
-        return (len(self.line) <= self.pos + 1 or
-                self.line[self.pos + 1] == ch)
+    def _get_identfier_token(self) -> Token:
+        if self._is_identifier():
+            self._byte_data = bytearray()
+            while self._is_identifier():
+                self._byte_data.extend(self.ch)
+                self._get_next_char()
+            return (
+                KEYWORD_TABLE.get(self.data, None) or
+                INBUILT_FUNCTION_LIST.get(self.data, Token.Unknown))
+        
+    def _get_variable_token(self) -> Token:
+        if self.ch == b'$':
+            self._get_next_char()
+            if self.ch != b'{':
+                raise SyntaxError("expected '{' found '%s'" % self.ch)
+            self._get_next_char()
+            self._byte_data = bytearray()
+            while self._is_identifier() or self._is_number():
+                self._byte_data.extend(self.ch)
+                self._get_next_char()
+            if self.ch != b'}':
+                raise SyntaxError("expected '}' found '%s'" % self.ch)
+            self._get_next_char()
+            return Token.DIdentifier
 
-    def _is_symbol(self):
-        return (self.char == "+" or self.char == "-" or
-                self.char == "*" or self.char == "/" or
-                self.char == "=")
+    def _get_operator_token(self) -> Token:
+        """ multi symbols like """
+        if self._is_operator():
+            self._byte_data = bytearray()
+            key = self.ch
+            self._get_next_char()
+            if self.ch == b'=':
+                self._byte_data.extend(self.ch)
+                self._get_next_char()
+                return OPERATOR_TABLE[self.data]
+            return OPERATOR_TABLE[key]
+
+    def _is_newline(self) -> Token:
+        return self.ch == b'\n' or self.ch == b'\t'
+
+    # predicate functions
+    def _is_operator(self):
+        return (
+            self.ch == b'+' or self.ch == b'-' 
+            or self.ch == b'*' or self.ch == b'/' 
+            or self.ch == b'=')
 
     def _is_whitespace(self) -> bool:
-        return (self.char == "\n" or self.char == "\r" or
-                self.char == " " or self.char == "\t" or
-                self.char == "")
+        return (
+            self.ch == b'\n' or self.ch == b'\r' 
+            or self.ch == b' ' or self.ch == b'\t')
+
+    def _is_comment(self) -> bool:
+        return self.ch == b'#'
+
+    def _is_eof(self) -> bool:
+        return self.ch == b'' or len(self.ch) == 0
 
     def _is_number(self) -> bool:
-        return ("0" <= self.char <= "9" or
-                self.char == ".")
+        return (
+            b'0' <= self.ch <= b'9' 
+            or self.ch == b'.')
 
     def _is_identifier(self) -> bool:
-        return ("a" <= self.char <= "z" or 
-                "A" <= self.char <= "Z" or
-                "_" == self.char)
+        return (
+            b'a' <= self.ch <= b'z' 
+            or b'A' <= self.ch <= b'Z' 
+            or b'_' == self.ch)
 
     # making Lexer class iterable
-    def __next__(self): return self.next_token()
+    def __next__(self): return self.token
 
     def __iter__(self): return self

@@ -31,7 +31,7 @@ class Token(Enum):
     Lte        = 48
     # Keyword
     If         = 61
-    ELse       = 62
+    Else       = 62
     Scenario   = 63
     Import     = 64
     End        = 65
@@ -41,8 +41,8 @@ class Token(Enum):
     Multiply   = 53
     Divide     = 54
 
-    IDENTIFIER   = 3   # assignment 
-    D_IDENTIFIER = 4  # read only
+    Identifier   = 3   # assignment 
+    DIdentifier  = 4  # read only
     Function     = 8
    
     def __eq__(self, val): return self.value == val
@@ -58,13 +58,14 @@ LOOKUP_TABLE = {
 }
 
 KEYWORD_TABLE = {
-    b'TRUE'  : Token.Truthy,
-    b'FALSE' : Token.Falsy,
-    b'NONE'  : Token.Nil,
-    b'IF'    : Token.If,
-    b'ELSE'  : Token.ELse,
-    b'END'   : Token.End,
-    b'SCENARIO'   : Token.Scenario
+    'TRUE'       : Token.Truthy,
+    'FALSE'      : Token.Falsy,
+    'NONE'       : Token.Nil,
+    'IF'         : Token.If,
+    'ELSE'       : Token.Else,
+    'END'        : Token.End,
+    'SCENARIO'   : Token.Scenario,
+    'IMPORT'     : Token.Import,
 }
 
 INBUILT_FUNCTION_LIST = {
@@ -78,14 +79,14 @@ INBUILT_FUNCTION_LIST = {
 OPERATOR_TABLE = {
     b'+' : Token.Plus,
     b'-' : Token.Minus,
-    b'*' : Token.Multiply,
+    '*' : Token.Multiply,
     b'/' : Token.Divide,
     b'=' : Token.Assignment,
-    b'==': Token.Eq,
+    '==': Token.Eq,
     b'!' : Token.Not,
-    b'!=': Token.Ne,
+    '!=': Token.Ne,
     b'>' : Token.Gt,
     b'<' : Token.Lt,
-    b'>=': Token.Gte,
-    b'<=': Token.Lte,
+    '>=': Token.Gte,
+    '<=': Token.Lte,
 }

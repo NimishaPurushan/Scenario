@@ -33,11 +33,11 @@ class GlobalEnv:
         self._ENV[self._stack_ptr]["__lineno__"] = self.reader.line_no
         self._ENV[self._stack_ptr]["__line__"] = self.reader.line
 
-    def store_value(self, name, value, is_global=False):
-        self._ENV[0 if is_global else self._stack_ptr][name] = value
+    def store_value(self, name, value):
+        self._ENV[self._stack_ptr][name] = value
         print(self._ENV)
         
-    def get_value(self, name, lexer):
+    def get_value(self, name):
         # check local stack
         print("name to search:", name)
         print("stacptr:",self._stack_ptr)
@@ -54,7 +54,7 @@ class GlobalEnv:
             print(self._ENV[0][name])
             return self._ENV[0][name]
         else:
-            lexer.raise_error(f"{name} does not exist", exception="NameError")
+            raise NameError(f"{name} does not exist")
 
     def pop_stack(self):
         self._ENV.pop()

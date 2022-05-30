@@ -1,19 +1,19 @@
 # this is an example file for how scenario file will work
 
-# IMPORT will import the file 
-# the file name should be as string i.e covered in single quotes or double quotes
-# you can have multiple imports in a given line 
+# import block will import the Files 
+# imports all the functions and methods in global namespace
+IMPORT 
+    "./examples/script.scn" 
+    "./examples/variable.scn"
+END
 
-IMPORT     "./script.scn", "./variable.scn"
 
 
-# SET is used to modify inbuilt settings
 SET_TSHARK_PATH             "C:\\Program Files\\Wireshark"   
 SHOW_PRINT                   TRUE
 
 
-
-SCENARIO: TEST_2
+SCENARIO: TEST_2 
     RC_VAR_abc= PACKET_FILTER   pcap="..\\wireshark_parsing_tool\\silentcall.pcapng"      pcap_filter="(fxl-5.0.0.msgType==111)"     protocol="fxl-5.0.0"    ip=${IP}    port=${PORT}	    message_info=[{'fxl-5.0.0.msgType': '111'},{'fxl-5.0.0.msgType': '111'}]
     IF ${CONDITION_1}
         PACKET_FILTER    pcap="..\\wireshark_parsing_tool\\silentcall.pcapng"     pcap_filter="(fxl-5.0.0.msgType==111)"    protocol="fxl-5.0.0"    ip=${IP}    port=${PORT}    condition=FALSE

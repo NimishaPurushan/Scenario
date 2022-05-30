@@ -1,16 +1,19 @@
 from sys import argv, stderr
-from lib.lexer import Lexer
-from lib.parser import Parser
-from lib.environment import GlobalEnv
 from argparse import ArgumentParser
 import traceback
 
+from lib.logger import FrameworkLogger, ScenarioLogger
+
+log = FrameworkLogger(__name__)
+sc_log = ScenarioLogger(__name__)
+
 
 parse = ArgumentParser()
-cli_help = {'scenario_file': 'Scenario file name to execute.',
-            'scenario_name': 'Execute single scenario with the given name.',
-            'pcap_file': 'Pcap File name to execute'
-            }
+cli_help = {
+    'scenario_file': 'Scenario file name to execute.',
+    'scenario_name': 'Execute single scenario with the given name.',
+    'pcap_file'    : 'Pcap File name to execute'
+}
 
 # setting up the arguments
 parse.add_argument('--scn_file', help=cli_help['scenario_file'])
@@ -29,19 +32,35 @@ def Evaluator(lexer, parser, env):
         parser.eval(env, lexer)
 
 
-def main():
-    try:
-        file_name = args.scn_file
-        global_env = GlobalEnv(file_name)
-        lexer = Lexer(file_name)
-        parser = Parser(lexer)
-        Evaluator(lexer, parser, env=global_env)
-    except AssertionError:
-        global_env.traceback()
-    except Exception as E:
-        print(E, file=stderr)
-        traceback.print_exc()
-    
 
+def main(file_name=args.scn_file):
+    from lib.lexer import Lexer
+    from lib.parser import Parser
+    from lib.environment import GlobalEnv
+    from lib.file_reader import FileReader
+    
+    reader = FileReader(file_name)
+    global_env = GlobalEnv(reader)
+    try:
+        lexer = Lexer(reader)
+        parser = Parser(lexer)
+        ast_list = []
+        for p in parser:
+            if hasattr(p, "immediately_execute"):
+                p.eval(global_env)
+            else:
+                ast_list.append(p)
+        # Evaluator(lexer, parser, env=global_env)
+    except Exception as E:
+        reader.read_line()
+        sc_log.console_error(f"---------------------------------")
+        sc_log.console_error(f"File \"{file_name}\", in line {reader.line_no}, pos {reader.pos}")
+        sc_log.console_error(reader.line.decode().strip())
+        sc_log.console_error(" "*(reader.pos-1) + "^")
+        sc_log.console_error(f"{type(E).__name__}: {E}")
+        sc_log.console_error("---------------------------------")
+
+        global_env.traceback()
+        traceback.print_exc()
 if __name__ == "__main__":
     main()

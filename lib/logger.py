@@ -11,29 +11,31 @@ from sys import stderr
 # run from __main__ , the below values shall
 # be overridden by the values present in 'LoggingConfig.ini'
 logging_file_name = 'interpreter.log'
-CONSOLE_LOG_TO_DISPLAY = True
 MAX_LOG_ROTATOR_FILES = 5
 MAX_LOG_FILE_SIZE_kB = 100000
 DATAGRAM_HOST_IP = '127.0.0.15'
 DATAGRAM_PORT_NUMBER = 7777
 CONSOLE_FILE = open('report.log', 'w+', encoding='utf-8')
-
+BASE_LOG_FORMAT = '%(asctime)s\t%(levelname)s\t%(name)s\t%(message)s'
 
 class BaseLogger:
     """
     Provides basic logging functionalities:
     1. Log rotation
     """
+    CONSOLE_LOG_TO_DISPLAY = True
+
     def __init__(self):
         """Setting up base attributes for logging"""
         self.base_log_filepath = 'tmp'
-        self.base_log_format = '%(asctime)s\t%(levelname)s\t%(name)s\t%(message)s'
-        self.base_formatter = Formatter(fmt=self.base_log_format)
+        self.base_formatter = Formatter(fmt=BASE_LOG_FORMAT)
         self.base_rotating_handler = RotatingFileHandler(self.base_log_filepath+"\\"+logging_file_name,
                                                          maxBytes=MAX_LOG_FILE_SIZE_kB,
                                                          backupCount=MAX_LOG_ROTATOR_FILES,
                                                          encoding='utf-8')
-
+    @classmethod
+    def set_display(cls, arg):
+        cls.CONSOLE_LOG_TO_DISPLAY = arg 
 
 class FrameworkLogger(BaseLogger):
     def __init__(self, logger_name):
@@ -56,7 +58,6 @@ class FrameworkLogger(BaseLogger):
         if not self.__class__.__name__ == 'ApplicationLogger':
             self.logger.debug(f"Initialized framework logger for : {logger_name}")
         '''
-
     # Basic logging methods
     def info(self, msg, **kwargs):
         self.logger.info(msg, **kwargs)
@@ -73,7 +74,6 @@ class FrameworkLogger(BaseLogger):
     def error(self, msg, **kwargs):
         self.logger.error(msg, **kwargs)
 
-
 class ScenarioLogger(FrameworkLogger):
     def __init__(self, logger_name):
         FrameworkLogger.__init__(self, logger_name)
@@ -87,7 +87,7 @@ class ScenarioLogger(FrameworkLogger):
             msg = str(msg.encode('utf-8', errors='ignore'))
         self.logger.info(f"Console message -> {msg}")
         try:
-            if CONSOLE_LOG_TO_DISPLAY is True:
+            if self.CONSOLE_LOG_TO_DISPLAY is True:
                 print(str(datetime.now()) + '\t:\t' + msg, flush=True)
             print(str(datetime.now()) + '\t:\t' + msg, file=CONSOLE_FILE, flush=True)
         except UnicodeEncodeError as err:
@@ -101,12 +101,8 @@ class ScenarioLogger(FrameworkLogger):
             msg = str(msg.encode('utf-8', errors='ignore'))
         self.logger.info(f"Console message -> {msg}")
         try:
-            if CONSOLE_LOG_TO_DISPLAY is True:
+            if self.CONSOLE_LOG_TO_DISPLAY is True:
                 print(str(datetime.now()) + '\t:\t' + msg, flush=True)
-            print(str(datetime.now()) + '\t:\t' + msg, file=stderr, flush=True)
         except UnicodeEncodeError as err:
             # Need to understand this better than just to bypass !!
             self.logger.warning(f"Unable to print {msg} on stdout. Hence not printing it.")
-
-
-

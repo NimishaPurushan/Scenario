@@ -12,10 +12,6 @@ PRINT "HELLO, WORLD!"
 
 
 SET_TSHARK_PATH     "C:\Program Files\Wireshark"   
-# SET_PRINT is an inbuilt function that will set the print value
-# normal argument should be within one line or end with \
-# normally a function should be key:value pair
-# if key is not known then just put :
 SET_PRINT           TRUE  
 
 SCENARIO TEST_2 

@@ -1,4 +1,6 @@
 from enum import Enum
+
+from numpy import multiply
 from .inbuilt_functions import PcapAnalyser
 from .logger import BaseLogger
 
@@ -73,7 +75,7 @@ INBUILT_FUNCTION_LIST = {
     "CHECK_TIMING_INFO":  PcapAnalyser().check_timing,
     "SET_TSHARK_PATH"  : PcapAnalyser.set_tshark_patch,
     "SHOW_PRINT"       : BaseLogger.set_display,
-    "PRINT"            : print,
+    "PRINT"            : print
 }
 
 OPERATOR_TABLE = {
@@ -90,3 +92,17 @@ OPERATOR_TABLE = {
     '>=': Token.Gte,
     '<=': Token.Lte,
 }
+
+INFIX_OPERATION = {
+    Token.Plus.value:      lambda x,y:  x + y,
+    Token.Minus.value:     lambda x,y:  x - y,
+    Token.Divide.value:    lambda x,y:  x / y,
+    Token.Multiply.value:  lambda x,y:  x * y,
+    Token.Lt.value:  lambda x,y:  x < y,
+    Token.Gt.value:  lambda x,y:  x > y,
+    Token.Eq.value:  lambda x,y:  x == y,
+    Token.Ne.value:  lambda x,y:  x != y,
+    Token.Gte.value: lambda x,y:  x >= y,  
+    Token.Lte.value: lambda x,y:  x <= y,  
+}
+

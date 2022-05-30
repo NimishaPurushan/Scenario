@@ -1,4 +1,4 @@
-from .tokens import Token
+from .tokens import Token, INFIX_OPERATION
 from os.path import exists
 from os import path
 from .logger import FrameworkLogger, ScenarioLogger
@@ -195,7 +195,12 @@ class ListStatement:
     def eval(self, env):   
         return [x.eval(env) for x in self.list_data]
 
+
+
+
+
 class InfixStatement:
+  
 
     def __init__(self, lhs, op, rhs: list):
         self.lhs = lhs
@@ -206,4 +211,5 @@ class InfixStatement:
         return f"{self.lhs}{self.op}{self.rhs}\nFI"
 
     def eval(self,  env):
-        return self.lhs + self.rhs
+        print(self.op)
+        return INFIX_OPERATION[self.op](self.lhs.eval(env), self.rhs.eval(env))

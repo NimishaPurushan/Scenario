@@ -142,7 +142,8 @@ class Lexer:
         return (
             self.ch == b'+' or self.ch == b'-' 
             or self.ch == b'*' or self.ch == b'/' 
-            or self.ch == b'=')
+            or self.ch == b'=' or self.ch == b'>'
+            or self.ch == b'<')
 
     def _is_whitespace(self) -> bool:
         return (

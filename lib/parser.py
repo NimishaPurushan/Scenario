@@ -1,7 +1,7 @@
 from logging import exception
 from .logger import FrameworkLogger, ScenarioLogger
 from .syntax_tree import *
-from .tokens import Token
+from .tokens import Token, INFIX_OPERATION
 
 log = FrameworkLogger(__name__)
 tc_log = ScenarioLogger(__name__)
@@ -132,12 +132,14 @@ class Parser:
             return self._parse_infix_statement(lhs) or lhs
 
     def _parse_infix_statement(self, lhs):
+        print(self.token)
         if self._is_operator():
+            print(self._is_operator())
             operator = self.token
             self._get_next_token()
             rhs = self.next_expression()
             self._get_next_token()
-            return InfixStatement(lhs, operator, rhs)
+            return InfixStatement(lhs, operator.value, rhs)
 
     def _parse_boolean(self):
         if self.token == Token.Falsy or self.token == Token.Truthy:
@@ -176,8 +178,4 @@ class Parser:
     def __iter__(self): return self
    
     def _is_operator(self):
-        return (
-            self.token == Token.Plus or self.token == Token.Minus 
-            or self.token == Token.Divide or self.token == Token.Multiply 
-            or self.token == Token.Gt or self.token == Token.Lt 
-            or self.token == Token.Gte or self.token == Token.Lte)
+        return  self.token.value in INFIX_OPERATION

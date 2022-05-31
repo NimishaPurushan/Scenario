@@ -1,37 +1,50 @@
 # this is an example file for how scenario file will work
-
 # import block will import the Files 
 # imports all the functions and methods in global namespace
 IMPORT 
-    "./examples/script.scn"      
+    "./examples/script.py"
     "./examples/variable.scn"
 END
 
 PRINT "HELLO, WORLD!"
 
 
-
 SET_TSHARK_PATH     "C:\Program Files\Wireshark"   
 SET_PRINT           TRUE  
 
-SCENARIO TEST_2 
+
+SCENARIO  VERIFY_SILENT_CALL_PACKET_ORDER
     # PACKET_FILTER is an inbuilt_functions 
     # here, we are passing argument with Keyword
     # passing keyword arguemnt requires 
     # argumentname : value
-    ${RC_VAR_abc} =  PACKET_FILTER                                  
-        pcap        : "..\wireshark_parsing_tool\silentcall.pcapng" 
-        pcap_filter : "(fxl-5.0.0.msgType==111)"                    
-        protocol    : "fxl-5.0.0"                                    
-        ip          : ${IP}                                          
-        port        : ${PORT}                                     
-        message_info: [{"fxl-5.0.0.msgType": "111"}, {"fxl-5.0.0.msgType": "111"}]
+    ${RC_VAR_abc} =  VERIFY_MESSAGE
+            pcap_filename        : "C:\\Users\\nipur\\downloads\\wireshark_parsing_tool\\wireshark_parsing_tool\\silentcall.pcapng"
+            pcap_filter : "(fxl-5.0.0)"
+            protocol    : "fxl-5.0.0"
+            message_info: [{'fxl-5.0.0.msgType':'409'},{'fxl-5.0.0.msgType':'413'},{'fxl-5.0.0.msgType':'405'}]
+END
 
+SCENARIO  VERIFY_PACKET_TIMING
+    ${RC_VAR_abc} = GET_PACKET_INFO   pcap_filename:${PCAP_FILE}     pcap_filter:"(fxl-5.0.0)"     protocol:"fxl-5.0.0"
+    VERIFY_TIMING_INFO   pcap_packets:${RC_VAR_abc}
+                         time_interval:0.1
+                         message:{"fxl-5.0.0.msgType": "413"}
+                         start_message:{"fxl-5.0.0.msgType": "409"}
+                         stop_message:{"fxl-5.0.0.msgType": "405"}
+END
+
+SCENARIO  VERIFY_PACKET
     IF ${CONDITION_1}
-        PACKET_FILTER    pcap:"..\wireshark_parsing_tool\silentcall.pcapng"     pcap_filter:"(fxl-5.0.0.msgType==111)"    protocol:"fxl-5.0.0"    ip:${IP}    port:${PORT}    condition:FALSE
+        VERIFY_PACKET_FILTER    pcap_filename:${PCAP_FILE}     pcap_filter:"(fxl-5.0.0.msgType==111)"    condition:">2"
     END
-        
     IF ${CONDITION_2}
-        ${RC_VAR_abc} =   PACKET_FILTER    pcap:"../wireshark_parsing_tool/silentcall.pcapng"     pcap_filter:"(fxl-5.0.0.msgType==111)"    protocol:"fxl-5.0.0"    ip:${IP}    port:${PORT} 		condition:FALSE
+        ${RC_VAR_abc} =    GET_PACKET_INFO    pcap_filename:${PCAP_FILE}     pcap_filter:"(fxl-5.0.0)"   protocol:"fxl-5.0.0"
+        VERIFY_PARAMETER    pcap_packets:${RC_VAR_abc}   parameter:"fxl-5.0.0.rsrp"   expected_value:"-13.2185"
     END
+END
+
+SCENARIO VERIFY_CALLBACK
+    ${a} = verify_packets    a:1
+    PRINT ${a}
 END

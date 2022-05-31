@@ -38,8 +38,6 @@ class GlobalEnv:
         
     def get_value(self, name):
         # check local stack
-        print("name to search:", name)
-        print("stacptr:",self._stack_ptr)
         if name in self._ENV[self._stack_ptr]:
             return self._ENV[self._stack_ptr][name]
         # check the last stack
@@ -47,9 +45,6 @@ class GlobalEnv:
             return self._ENV[self._stack_ptr]
         # check if its in global variable
         elif name in self._ENV[0]:
-            print("came here")
-            print(type(self._ENV[0][name]))
-            print(self._ENV[0][name])
             return self._ENV[0][name]
         else:
             raise NameError(f"{name} does not exist")

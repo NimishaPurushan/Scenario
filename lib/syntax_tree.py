@@ -37,25 +37,47 @@ class ImportStatement:
         from lib.environment import GlobalEnv
         from lib.file_reader import FileReader
         for file_name in self.value:
-            reader = FileReader(file_name)
-            try:
-                log.info(f"Importing File: {file_name}")
-                lexer = Lexer(reader)
-                parser = Parser(lexer)
-                for p in parser:
-                    p.eval(env)
-            except Exception as E:
-                reader.read_line()
-                sc_log.console_error(f"---------------------------------")
-                sc_log.console_error(f"File \"{file_name}\", in line {reader.line_no}, pos {reader.pos}")
-                sc_log.console_error(reader.line.decode().strip())
-                sc_log.console_error(" "*(reader.pos-1) + "^")
-                sc_log.console_error(f"{type(E).__name__}: {E}")
-                sc_log.console_error("---------------------------------")
-                env.traceback()
-                import traceback
-                traceback.print_exc()
-                exit(0)
+            if file_name.endswith(".py"):
+                if not exists(file_name):
+                    sc_log.console_error(f"{file_name} does not exist")
+                else:
+                    _file = path.basename(file_name)
+                    log.info(f"Importing File: {_file}")
+                    variable_object = self._import_code(_file, file_name)
+                    for o in variable_object.__dir__():
+                        if not o.startswith("__"):
+                            env.store_value(o, getattr(variable_object, o))
+            else:
+                reader = FileReader(file_name)
+                try:
+                    log.info(f"Importing File: {file_name}")
+                    lexer = Lexer(reader)
+                    parser = Parser(lexer)
+                    for p in parser:
+                        p.eval(env)
+                except Exception as E:
+                    reader.read_line()
+                    sc_log.console_error(f"---------------------------------")
+                    sc_log.console_error(f"File \"{file_name}\", in line {reader.line_no}, pos {reader.pos}")
+                    sc_log.console_error(reader.line.decode().strip())
+                    sc_log.console_error(" "*(reader.pos-1) + "^")
+                    sc_log.console_error(f"{type(E).__name__}: {E}")
+                    sc_log.console_error("---------------------------------")
+                    env.traceback()
+                    import traceback
+                    traceback.print_exc()
+                    exit(0)
+
+    @staticmethod
+    def _import_code(file_name, file_path, add_to_sys_modules=1):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(file_name, file_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        if add_to_sys_modules:
+            import sys
+            sys.modules[file_name] = module
+        return module
 
 
 class StringStatement:
@@ -115,7 +137,7 @@ class ScenarioStatement:
 
     def __init__(self, test_name, block: list):
         self.block = block
-        self.test_name = test_name.value
+        self.test_name = test_name
     
     def __repr__(self):
         return f"SCENARIO {self.test_name} {self.block}"
@@ -161,7 +183,7 @@ class DictStatement:
 class DAssignmentStatement:
 
     def __init__(self, variable):
-        self.variable =variable
+        self.variable = variable
      
     def __repr__(self):
         return f"${self.variable}"
@@ -196,7 +218,6 @@ class FunctionStatement:
         return self.function(*self.args.eval(env),**self.kargs.eval(env))
 
 
-
 class InfixStatement:
 
     def __init__(self, lhs, op, rhs: list):
@@ -209,3 +230,19 @@ class InfixStatement:
 
     def eval(self,  env):
         return INFIX_OPERATION[self.op](self.lhs.eval(env), self.rhs.eval(env))
+
+
+class CustomFunctionStatement:
+
+    def __init__(self, function, args: ListStatement, kargs: DictStatement):
+        self.function_name = function
+        self.kargs = kargs
+        self.args = args
+
+    def __repr__(self):
+        return f"CALL {self.function_name.__name__}{self.args}{self.kargs}"
+
+    def eval(self, env):
+        print(f"function name:", self.function_name)
+        function = env.get_value(self.function_name)
+        return function(*self.args.eval(env),**self.kargs.eval(env))

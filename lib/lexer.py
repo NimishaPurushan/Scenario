@@ -10,7 +10,6 @@ sc_log = ScenarioLogger(__name__)
 __all__ = ("Lexer",)
 
 
-
 class Lexer:
     
     __slots__ = ("reader", "ch", "_byte_data", "_exception")

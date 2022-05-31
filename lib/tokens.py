@@ -74,8 +74,11 @@ KEYWORD_TABLE = {
 }
 
 INBUILT_FUNCTION_LIST = {
-    "PACKET_FILTER"    : PcapAnalyser().tshark_validate,
-    "CHECK_TIMING_INFO":  PcapAnalyser().check_timing,
+    "GET_PACKET_INFO": PcapAnalyser().get_packet_info,
+    "VERIFY_PACKET_FILTER": PcapAnalyser().tshark_validate,
+    "VERIFY_TIMING_INFO":  PcapAnalyser().check_timing,
+    "VERIFY_MESSAGE": PcapAnalyser().verify_msg,
+    "VERIFY_PARAMETER": PcapAnalyser().verify_parameter,
     "SET_TSHARK_PATH"  : PcapAnalyser.set_tshark_patch,
     "SET_PRINT"       : BaseLogger.set_display,
     "PRINT"            : print

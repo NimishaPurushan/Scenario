@@ -27,6 +27,7 @@ class Parser:
             or self._parse_function() 
             or self._parse_list()
             or self._parse_dict()
+            or self._parse_custom_function()
             or self._parse_unknown())
 
     def _get_next_token(self):
@@ -111,8 +112,9 @@ class Parser:
             self._get_next_token()
             if self.token != Token.Identifier:
                 raise SyntaxError(f"expected \"Identifier\" found \"{self.lexer.data}\"")
+
+            test_name = self.lexer.data
             self._get_next_token()
-            test_name = self.token
             blocks_command = []
             while self.token != Token.End:
                 if self.token == Token.Eof:
@@ -169,6 +171,29 @@ class Parser:
                 self._get_next_token()
                 return AssignmentStatment(lhs,  self.next_expression())
             return self._parse_infix_statement(lhs) or DAssignmentStatement(lhs)
+
+    def _parse_custom_function(self):
+        if self.token == Token.Identifier:
+            function = self.lexer.data
+            self._get_next_token()
+            args = []
+            pos = lambda: self.lexer.reader.line_no
+            current_pos = pos()
+            while pos() == current_pos and self.token != Token.Identifier:
+                args.append(self.next_expression())
+
+            kargs = {}
+            while self.token == Token.Identifier:
+                variable_name = StringStatement(self.lexer.data)
+                self._get_next_token()
+                if self.token == Token.Colon:
+                    self._get_next_token()
+                    if variable_name in kargs:
+                        raise SyntaxError(f"duplicate argument {variable_name}")
+                    kargs[variable_name] = self.next_expression()
+                else:
+                    raise SyntaxError(f"expected \":\" found \"{self.lexer.data}\"")
+            return CustomFunctionStatement(function, ListStatement(args), DictStatement(kargs))
 
   
     def __next__(self): return self.next_expression()

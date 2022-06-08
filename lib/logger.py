@@ -4,6 +4,7 @@ from logging import Formatter
 from logging.handlers import DatagramHandler
 from datetime import datetime
 from sys import stderr
+from os.path import join
 
 '''LOGGING VARIABLES'''
 # The below hard-coded values shall be used
@@ -29,7 +30,7 @@ class BaseLogger:
         """Setting up base attributes for logging"""
         self.base_log_filepath = 'tmp'
         self.base_formatter = Formatter(fmt=BASE_LOG_FORMAT)
-        self.base_rotating_handler = RotatingFileHandler(self.base_log_filepath+"\\"+logging_file_name,
+        self.base_rotating_handler = RotatingFileHandler( join(self.base_log_filepath, logging_file_name),
                                                          maxBytes=MAX_LOG_FILE_SIZE_kB,
                                                          backupCount=MAX_LOG_ROTATOR_FILES,
                                                          encoding='utf-8')
